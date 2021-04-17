@@ -1,0 +1,1 @@
+Simple riddles website made with ASP.NET Core MVC

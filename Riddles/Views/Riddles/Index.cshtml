@@ -1,0 +1,103 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Riddles.Models
+
+@model IEnumerable<Riddle>
+@inject UserManager<User> UserManager
+@inject SignInManager<User> SignInManager
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Question)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Answer)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Author.Email)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var user = await UserManager.GetUserAsync(User);
+
+            foreach (var item in Model)
+            {
+                var status = user != null ? (item.Solvers.FirstOrDefault(ss => ss.User.Id == user.Id)?.Status ?? UserRiddleStatus.None) : UserRiddleStatus.None;
+
+                string solveClass;
+                string solveText = "Solve";
+                string solveAction = "";
+
+                string editClass = "d-none";
+                string deleteClass = "d-none";
+                string detailsClass = "";
+                string detailsText = status == UserRiddleStatus.None ? "Reveal" : "Details";
+
+                switch (status)
+                {
+                    case UserRiddleStatus.Created:
+                        solveClass = "d-none";
+
+                        editClass = "text-warning";
+                        deleteClass = "text-danger";
+                        break;
+
+                    case UserRiddleStatus.Solved:
+                        solveClass = "text-success";
+                        solveText = item.ComplimentForWinning;
+                        break;
+
+                    case UserRiddleStatus.Surrendered:
+                        solveClass = "text-danger";
+                        solveText = item.InsultForLosing;
+                        break;
+
+                    default:
+                        solveClass = "text-primary";
+                        solveAction = "Solve";
+
+                        detailsClass = "text-danger";
+                        break;
+                }
+
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Question)
+                </td>
+                <td>
+                    @if (status != UserRiddleStatus.None)
+                    {
+                        @Html.DisplayFor(model => item.Answer)
+                    }
+                    else
+                    {
+                        <p class="text-secondary">Not solved yet!</p>
+                    }
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Author.Email)
+                </td>
+                <td>
+                    <a class="@solveClass" asp-action="@solveAction" asp-route-id="@item.ID">@solveText</a> |
+                    <a class="@editClass" asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
+                    <a class="@detailsClass" asp-action="Details" asp-route-id="@item.ID">@detailsText</a> |
+                    <a class="@deleteClass" asp-action="Delete" asp-route-id="@item.ID">Delete</a>
+                </td>
+            </tr>
+        }
+        }
+    </tbody>
+</table>
